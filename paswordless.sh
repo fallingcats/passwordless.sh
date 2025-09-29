@@ -14,12 +14,14 @@ fi
 
 # If you don't care about passwords the old one was likely bad anyway.
 # Remove it so the system can be relatively secure (in case sshd is running or something)
-passwd -d $user
-usermod $user -aG $group
+sudo passwd -d $user
+sudo usermod $user -aG $group
 
-rm -f /etc/polkit-1/rules.d/*-passwordless.rules /etc/sudoers.d/*-passwordless /etc/sddm.conf.d/passwordless.conf
+sudo rm -f /etc/polkit-1/rules.d/*-passwordless.rules /etc/sudoers.d/*-passwordless /etc/sddm.conf.d/passwordless.conf
 
-cat > /etc/polkit-1/rules.d/49-$group-passwordless.rules << EOF
+alias sudo_tee="> /dev/null sudo tee"
+
+sudo_tee /etc/polkit-1/rules.d/49-$group-passwordless.rules << EOF
 polkit.addRule(function(action, subject) {
 	if (subject.isInGroup("$group")) {
 		return polkit.Result.YES;
@@ -28,18 +30,18 @@ polkit.addRule(function(action, subject) {
 EOF
 
 # Unneccesary when user has no password
-cat > /etc/sudoers.d/99-$group-passwordless << EOF
+sudo_tee /etc/sudoers.d/99-$group-passwordless << EOF
 %$group ALL=(ALL:ALL) NOPASSWD: ALL
 EOF
 
-if [[ -n $DESKTOP_SESSION && -d /etc/sddm.conf.d/ && ! $(grep /etc/sddm.conf* -re "^\[Autologin\]") ]]
+if [[ -n ${DESKTOP_SESSION:-} && -d /etc/sddm.conf.d/ && ! $(grep /etc/sddm.conf* -re "^\[Autologin\]") ]]
 then
 	sddm_config=/etc/sddm.conf.d/kde_settings.conf
 	if [[ -n "$sddm_config" ]]
 	then
 		sddm_config=/etc/sddm.conf.d/passwordless.conf
 	fi
-	cat >> "$sddm_config" << EOF
+	sudo_tee -a "$sddm_config" << EOF
 [Autologin]
 Relogin=false
 Session=$DESKTOP_SESSION
