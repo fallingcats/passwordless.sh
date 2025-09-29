@@ -59,4 +59,5 @@ Autolock=false
 LockOnResume=false
 Timeout=0
 EOF
+	chown $user /home/$user/.config/kscreenlockerrc
 fi
