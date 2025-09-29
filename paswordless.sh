@@ -17,7 +17,7 @@ fi
 passwd -d $user
 usermod $user -aG $group
 
-rm /etc/polkit-1/rules.d/*-passwordless.rules /etc/sudoers.d/*-passwordless
+rm -f /etc/polkit-1/rules.d/*-passwordless.rules /etc/sudoers.d/*-passwordless /etc/sddm.conf.d/passwordless.conf
 
 cat > /etc/polkit-1/rules.d/49-$group-passwordless.rules << EOF
 polkit.addRule(function(action, subject) {
@@ -31,3 +31,18 @@ EOF
 cat > /etc/sudoers.d/99-$group-passwordless << EOF
 %$group ALL=(ALL:ALL) NOPASSWD: ALL
 EOF
+
+if [[ -n $DESKTOP_SESSION && -d /etc/sddm.conf.d/ && ! $(grep /etc/sddm.conf* -re "^\[Autologin\]") ]]
+then
+	sddm_config=/etc/sddm.conf.d/kde_settings.conf
+	if [[ -n "$sddm_config" ]]
+	then
+		sddm_config=/etc/sddm.conf.d/passwordless.conf
+	fi
+	cat >> "$sddm_config" << EOF
+[Autologin]
+Relogin=false
+Session=$DESKTOP_SESSION
+User=$user
+EOF
+fi
