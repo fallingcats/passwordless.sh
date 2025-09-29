@@ -53,7 +53,7 @@ fi
 
 if [[ "${XDG_CURRENT_DESKTOP:-}" == "KDE" ]]
 then
-	write /home/$user/.config/kscreenlocker << EOF
+	write /home/$user/.config/kscreenlockerrc << EOF
 [Daemon]
 Autolock=false
 LockOnResume=false
