@@ -14,14 +14,16 @@ fi
 
 # If you don't care about passwords the old one was likely bad anyway.
 # Remove it so the system can be relatively secure (in case sshd is running or something)
-sudo passwd -d $user
+sudo passwd -qd $user
 sudo usermod $user -aG $group
 
 sudo rm -f /etc/polkit-1/rules.d/*-passwordless.rules /etc/sudoers.d/*-passwordless /etc/sddm.conf.d/passwordless.conf
 
-alias sudo_tee="> /dev/null sudo tee"
+function write {
+    sudo tee "$@" > /dev/null
+}
 
-sudo_tee /etc/polkit-1/rules.d/49-$group-passwordless.rules << EOF
+write /etc/polkit-1/rules.d/49-$group-passwordless.rules << EOF
 polkit.addRule(function(action, subject) {
 	if (subject.isInGroup("$group")) {
 		return polkit.Result.YES;
@@ -30,7 +32,7 @@ polkit.addRule(function(action, subject) {
 EOF
 
 # Unneccesary when user has no password
-sudo_tee /etc/sudoers.d/99-$group-passwordless << EOF
+write /etc/sudoers.d/99-$group-passwordless << EOF
 %$group ALL=(ALL:ALL) NOPASSWD: ALL
 EOF
 
@@ -41,7 +43,7 @@ then
 	then
 		sddm_config=/etc/sddm.conf.d/passwordless.conf
 	fi
-	sudo_tee -a "$sddm_config" << EOF
+	write -a "$sddm_config" << EOF
 [Autologin]
 Relogin=false
 Session=$DESKTOP_SESSION
