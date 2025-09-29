@@ -50,3 +50,13 @@ Session=$DESKTOP_SESSION
 User=$user
 EOF
 fi
+
+if [[ "${XDG_CURRENT_DESKTOP:-}" == "KDE" ]]
+then
+	write /home/$user/.config/kscreenlocker << EOF
+[Daemon]
+Autolock=false
+LockOnResume=false
+Timeout=0
+EOF
+fi
